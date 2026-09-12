@@ -1,0 +1,9 @@
+schemaVersion,recordType,source.name,source.url,content.company,content.title,content.date,content.is_remote,content.role_family,collectedAt
+1.0,JOB,Greenhouse (Future),https://job-boards.greenhouse.io/future/jobs/4683133005,Future,Applied AI Engineer,2026-09-12T00:00:00,,Engineering,2026-09-12T08:31:50.712473
+1.0,JOB,Greenhouse (WITHIN),https://job-boards.greenhouse.io/agencywithin/jobs/5056863007,WITHIN,AI Engineer,2026-09-12T00:00:00,,Engineering,2026-09-12T08:31:50.712473
+1.0,JOB,Greenhouse (Upwork),https://job-boards.greenhouse.io/upwork/jobs/7621876003,Upwork,Contract: Senior AI Engineer,2026-09-12T00:00:00,True,Engineering,2026-09-12T08:31:50.712473
+1.0,JOB,Lever (Shield AI),https://jobs.lever.co/shieldai,Shield AI,Open Engineering Roles (multiple),2026-09-12T00:00:00,,Engineering,2026-09-12T08:31:50.712473
+1.0,JOB,Greenhouse (Scale AI),https://job-boards.greenhouse.io/scaleai,Scale AI,Open Roles - Corporate / Applications Platform,2026-09-12T00:00:00,,Engineering,2026-09-12T08:31:50.712473
+1.0,JOB,Greenhouse (Together AI),https://job-boards.greenhouse.io/togetherai,Together AI,"Associate, Infrastructure Strategy & Operations",2026-09-12T00:00:00,,Operations,2026-09-12T08:31:50.712473
+1.0,JOB,Greenhouse (Figure),https://job-boards.greenhouse.io/figureai,Figure,Systems Integration Engineer - Actuation Systems,2026-09-12T00:00:00,False,Engineering,2026-09-12T08:31:50.712473
+1.0,JOB,Greenhouse (Lightning AI),https://job-boards.greenhouse.io/lightningai,Lightning AI,Open Engineering Roles (multiple),2026-09-12T00:00:00,,Engineering,2026-09-12T08:31:50.712473
