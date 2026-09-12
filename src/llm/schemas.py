@@ -1,18 +1,17 @@
 """
 Canonical entity schemas for GraphOne / FrontierAtlas ingestion pipeline.
 
-These mirror the "Expected Schemas" section of the assignment exactly.
-Using pydantic gives us free validation + JSON-schema generation, which we
-feed straight into the LLM prompts (see prompts.py) so the model is
-constrained to emit exactly these fields.
+These mirror the expected entity schemas used by the ingestion pipeline.
+Pydantic provides validation and JSON-schema generation for LLM extraction.
 """
+
 from __future__ import annotations
 
 from datetime import datetime, timezone
 from enum import Enum
 from typing import List, Optional
 
-from pydantic import BaseModel, Field, HttpUrl
+from pydantic import BaseModel, Field
 
 
 class RecordType(str, Enum):
@@ -20,6 +19,7 @@ class RecordType(str, Enum):
     PRODUCT = "PRODUCT"
     RESEARCH_PAPER = "RESEARCH_PAPER"
     JOB = "JOB"
+    NEWS = "NEWS"
 
 
 class PricingModel(str, Enum):
@@ -30,15 +30,23 @@ class PricingModel(str, Enum):
 
 
 class SourceMeta(BaseModel):
-    name: str = Field(..., description="Name of the source site, e.g. 'TechCrunch'")
-    url: str = Field(..., description="Original source URL this record was extracted from")
+    name: str = Field(
+        ...,
+        description="Name of the source site, e.g. 'TechCrunch'",
+    )
+    url: str = Field(
+        ...,
+        description="Original source URL this record was extracted from",
+    )
 
 
 class BaseEntity(BaseModel):
     schemaVersion: str = "1.0"
     recordType: RecordType
     source: SourceMeta
-    collectedAt: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+    collectedAt: datetime = Field(
+        default_factory=lambda: datetime.now(timezone.utc)
+    )
 
 
 class StartupContentData(BaseModel):
@@ -47,7 +55,9 @@ class StartupContentData(BaseModel):
 
 class StartupContent(BaseModel):
     entityName: str
-    data: StartupContentData = Field(default_factory=StartupContentData)
+    data: StartupContentData = Field(
+        default_factory=StartupContentData
+    )
 
 
 class StartupEntity(BaseEntity):
@@ -91,21 +101,28 @@ class JobEntity(BaseEntity):
     content: JobContent
 
 
+class NewsContent(BaseModel):
+    title: str
+    published_date: Optional[datetime] = None
+    excerpt: Optional[str] = None
+
+
+class NewsEntity(BaseEntity):
+    recordType: RecordType = RecordType.NEWS
+    content: NewsContent
+
+
 SCHEMA_MAP = {
     RecordType.STARTUP: StartupEntity,
     RecordType.PRODUCT: ProductEntity,
     RecordType.RESEARCH_PAPER: ResearchPaperEntity,
     RecordType.JOB: JobEntity,
+    RecordType.NEWS: NewsEntity,
 }
 
 
 def json_schema_for(record_type: RecordType) -> dict:
-    """Return a trimmed JSON schema (content sub-object only) to embed in prompts.
-
-    We only show the model the `content` shape — schemaVersion/recordType/source/
-    collectedAt are filled in deterministically by our code, not by the LLM,
-    which reduces hallucination surface area.
-    """
+    """Return the content schema used in LLM extraction prompts."""
     model = SCHEMA_MAP[record_type]
     content_field = model.model_fields["content"].annotation
     return content_field.model_json_schema()
