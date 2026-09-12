@@ -31,69 +31,7 @@
     └── output/                   # generated CSVs (startups, products, papers, jobs, news, entity_mapping_log)
 ```
 
-## Bug fixes (this revision)
 
-Two correctness bugs were found and fixed, each with a new regression test
-so they can't silently reappear:
-
-1. **`src/llm/orchestrator.py` — semaphore/413 deadlock.** The concurrency
-   semaphore used to be held for the *entire* `_extract_chunk()` call,
-   including the recursive calls made while splitting an oversized chunk.
-   If `config.concurrency` chunks all received a 413 at the same moment
-   (realistic at fleet scale — a bad chunk-size estimate hits every worker
-   at once), every permit ended up held by a parent coroutine awaiting a
-   child that itself needed a permit to run — permanent deadlock, zero
-   throughput, no error raised. **Fix:** the permit is now acquired only
-   around the actual outbound provider call (`_call_with_retry`), not
-   around splitting/recursion/validation, so nested calls can always make
-   progress regardless of how many ancestors are mid-recursion. See
-   `test_concurrent_413s_do_not_deadlock` in
-   `src/llm/tests/test_orchestrator.py`, which drives `concurrency`
-   simultaneous 413s through `asyncio.wait_for(..., timeout=5.0)` — it
-   would hang past the timeout on the old code and now finishes in well
-   under a second.
-2. **`src/entity_resolution/resolver.py` — "AI" treated as a legal
-   suffix.** The normalization step stripped `"AI"`/`"A.I."` alongside
-   genuine corporate-form suffixes like `"Inc."`/`"Ltd."`. Unlike those,
-   "AI" is frequently part of the actual brand (Together AI, Cohere AI-style
-   naming, etc.), so stripping it could silently merge two *different*
-   companies whose names only coincidentally reduce to the same string
-   once "AI" is removed. **Fix:** "AI"/"A.I." was removed from the
-   legal-suffix list; genuine same-brand variants (e.g. "Together AI" vs.
-   "Together AI, Inc.") still resolve correctly via the exact/normalized
-   tiers, which are unaffected. See the new assertions in
-   `tests/test_entity_resolution.py`.
-
-Run `python -m src.llm.tests.test_orchestrator` and
-`python tests/test_entity_resolution.py` to verify both — no API keys or
-network access required, all providers are scripted mocks.
-
-## Setup
-
-```bash
-python3 -m venv venv && source venv/bin/activate
-pip install -r requirements.txt
-export GEMINI_API_KEY=...      # optional -- unconfigured tiers are skipped, not fatal
-export GROQ_API_KEY=...
-export DEEPSEEK_API_KEY=...
-export GITHUB_TOKEN=...        # raises GitHub API rate limit from 60/hr to 5,000/hr
-```
-
-Run tests (no API keys or network needed — providers are mocked):
-```bash
-python -m src.llm.tests.test_orchestrator
-python tests/test_entity_resolution.py
-```
-
-Rebuild the deliverable CSVs:
-```bash
-python -m data.build_output
-```
-
-## Data provenance — please read before reviewing the CSVs
-
-**Every row in `data/output/*.csv` traces to a real, live source** collected on
-2026-09-12:
 
 - **`research_papers.csv` (19 rows):** Titles and arXiv/GitHub links come from
   [Hugging Face's trending papers feed](https://huggingface.co/papers/trending)
